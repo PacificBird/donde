@@ -1,4 +1,4 @@
-# Whererror: contextful errors made simple.
+# Donde: context-ful errors made simple.
 
 I have struggled in the past with how to design Rust errors. Rust takes the
 correct path of errors-as-data and avoids the pitfall of exceptions; however,
@@ -22,9 +22,9 @@ check if a specific inner type occurred! I wanted something easy, that enforced
 a minimum amount of context and with automatic conversions at boundaries of my chosing
 using `?`, and with the option to add more context if I need. Taking inspiration from
 `exn`'s use of `#[track_caller]` to attach location information, I created
-`whererror`.
+`donde` ("where" in Spanish).
 
-Defining contextful errors is extremely simple:
+Defining context-ful errors is extremely simple:
 ```rust
    // first, define a type that represents the kind of errors that can occur,
    // (I would recommend using `thiserror` to make it easier).
@@ -36,11 +36,11 @@ Defining contextful errors is extremely simple:
        Parse(#[from] ParseError),
    }
 
-   // then, use the `whererror::err_context` function-like macro to get your contextful version for free!
-   whererror::err_context! { ApiError, ApiErrorKind, "Error occurred in API" };
+   // then, use the `donde::err_context` function-like macro to get your context-ful version for free!
+   donde::err_context! { ApiError, ApiErrorKind, "Error occurred in API" };
 ```
 
-Now, at whatever boundaries you deem important, you can use your contextful
+Now, at whatever boundaries you deem important, you can use your context-ful
 error type. This will tell you, at minimum, exactly where the conversion
 happened. Any type that implements `Into` for the underlying error kind type
 can be automatically converted using `?`. The print-out tells you your message,
@@ -58,11 +58,11 @@ a pleasant way.
    }
 ```
 
-You can also add extra context by importing the `whererror::ResultContext`
+You can also add extra context by importing the `donde::ResultContext`
 trait and using the `.context(impl ToString)` or `.with_context(Fn() -> String)` methods.
 The context stacks into the print out.
 ```rust
-   use whererror::ResultContext;
+   use donde::ResultContext;
 
    fn make_request() -> Result<String, ApiError> {
        reqwest::get("https://malformed.website")
@@ -81,7 +81,7 @@ The context stacks into the print out.
    }
 ```
 
-Contextful errors stack well together, define multiple at various important
+Context-ful errors stack well together, define multiple at various important
 function and module boundaries to trace an error all the way through complex
 systems.
 ```rust
@@ -94,7 +94,7 @@ systems.
            .with_context(|| "while decoding".to_string())?
    }
 
-   whererror::err_context! {ParseError, ParseErrorKind, "Error deserializing payload"};
+   donde::err_context! {ParseError, ParseErrorKind, "Error deserializing payload"};
 
    #[derive(thiserror::Error, Debug)]
    pub enum ParseErrorKind {
@@ -117,3 +117,13 @@ systems.
        println!("{}", deserialize_payload(make_request()));
    }
 ```
+
+## Why `donde` over [`wherror`](https://github.com/dra11y/wherror)?
+A few reasons! `wherror` doesn't support adding extra context, which I believe is necessary to
+support, and not feasible with it's design philosophy. Use of the `location` is less
+ergonomic with `wherror`, as you need to work it into your error readout manually
+(also dealing with the fact that `.location()` is Optional). For adding locations
+to all variants of an enum, you basically have to do what this library does,
+except manually. The few extra nice features are fine, but not worth using a fork
+of a community standard over, when a declarative macro will do the important work,
+plus give you the ability to add custom context.

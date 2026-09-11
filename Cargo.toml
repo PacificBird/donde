@@ -1,4 +1,9 @@
 [package]
-name = "whererror"
+name = "donde"
 version = "0.1.0"
 edition = "2024"
+license = "MIT"
+description = "Context-ful errors made simple."
+repository = "https://github.com/pacificbird/donde"
+homepage = "https://github.com/pacificbird/donde"
+keywords = ["error-handling", "error"]
