@@ -5,10 +5,12 @@ pub const INDENT: &'static str = "\n    └──> ";
 
 /// This trait allows for conversions from Results without contextful errors into ones
 /// with context.
-pub trait ResultContext<T, E, Ctx> {
-    fn context(self, context: impl std::string::ToString) -> std::result::Result<T, Ctx>;
+pub trait ResultContext<Ctx> {
+    type Ok;
 
-    fn with_context(self, f: impl Fn() -> String) -> std::result::Result<T, Ctx>;
+    fn context(self, context: impl std::string::ToString) -> std::result::Result<Self::Ok, Ctx>;
+
+    fn with_context(self, f: impl Fn() -> String) -> std::result::Result<Self::Ok, Ctx>;
 }
 
 #[macro_export]
@@ -90,7 +92,9 @@ macro_rules! err_context {
 
         }
 
-        impl<T> $crate::ResultContext<T, $ctx, $ctx> for std::result::Result<T, $ctx> {
+        impl<T> $crate::ResultContext<$ctx> for std::result::Result<T, $ctx> {
+            type Ok = T;
+
             fn context(self, context: impl std::string::ToString) -> std::result::Result<T, $ctx> {
                 match self {
                     Ok(val) => Ok(val),
@@ -120,10 +124,11 @@ macro_rules! err_context {
             }
         }
 
-        impl<T, E> $crate::ResultContext<T, E, $ctx> for std::result::Result<T, E>
+        impl<T, E> $crate::ResultContext<$ctx> for std::result::Result<T, E>
         where
             E: Into<$kind>,
         {
+            type Ok = T;
 
             #[track_caller]
             fn context(self, context: impl std::string::ToString) -> std::result::Result<T, $ctx> {
